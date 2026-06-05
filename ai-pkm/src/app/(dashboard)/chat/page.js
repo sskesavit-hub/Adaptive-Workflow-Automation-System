@@ -193,17 +193,17 @@ export default function ChatPage() {
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* 3D Avatar Panel */}
       <div style={{
-        width: '340px', flexShrink: 0,
+        width: '280px', flexShrink: 0,
         borderRight: '1px solid var(--border)',
         background: 'var(--bg-secondary)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        padding: '24px 16px', gap: '16px',
+        padding: '20px 14px', gap: '14px',
       }}>
         <h2 style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
           AI Knowledge Assistant
         </h2>
 
-        <div style={{ width: '100%', height: '300px', borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: '220px', borderRadius: '14px', overflow: 'hidden' }}>
           <Avatar3D isSpeaking={isLoading} isThinking={isLoading} />
         </div>
 
