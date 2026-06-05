@@ -99,6 +99,37 @@ export default function ChatPage() {
     return 'No AI configured';
   };
 
+  // ── Direct browser-side call to local LLM ────────────────
+  const callLocalLlmDirectly = async (message) => {
+    const { localLlmProvider, localLlmModel, localLlmUrl } = keys;
+    const SYSTEM = 'You are NeuralVault, a helpful AI knowledge assistant. Be concise and helpful.';
+
+    if (localLlmProvider === 'ollama') {
+      const res = await fetch(`${localLlmUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: localLlmModel, prompt: `${SYSTEM}\n\nUser: ${message}\nAssistant:`, stream: false }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const data = await res.json();
+      return data.response || 'No response from Ollama.';
+    }
+
+    // LM Studio / Jan / GPT4All / LocalAI — OpenAI-compatible
+    const res = await fetch(`${localLlmUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer local' },
+      body: JSON.stringify({
+        model: localLlmModel,
+        messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: message }],
+        max_tokens: 1024, temperature: 0.4, stream: false,
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || 'No response from local LLM.';
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg = { role: 'user', content: input, timestamp: new Date().toISOString() };
@@ -107,37 +138,48 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: input,
-          apiKey: keys.geminiApiKey,
-          modelName: keys.modelName,
-          backendUrl: keys.backendUrl,
-          localLlmEnabled: keys.localLlmEnabled,
-          localLlmProvider: keys.localLlmProvider,
-          localLlmModel: keys.localLlmModel,
-          localLlmUrl: keys.localLlmUrl,
-          localLlmType: keys.localLlmProvider === 'ollama' ? 'ollama' : 'openai',
-        }),
-      });
-      const data = await res.json();
+      let answer = '';
+      let sources = [];
+
+      if (localReady) {
+        // ── Local LLM: call directly from browser ──────────
+        answer = await callLocalLlmDirectly(input);
+        answer = `🖥️ *(${keys.localLlmModel})*\n\n${answer}`;
+      } else {
+        // ── Gemini / backend: go through Vercel API ─────────
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: input,
+            apiKey: keys.geminiApiKey,
+            modelName: keys.modelName,
+            backendUrl: keys.backendUrl,
+          }),
+        });
+        const data = await res.json();
+        answer = data.answer || data.error || 'Something went wrong.';
+        sources = data.sources || [];
+      }
+
       setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.answer || data.error || 'Something went wrong.',
-        sources: data.sources || [],
+        role: 'assistant', content: answer, sources,
         timestamp: new Date().toISOString(),
       }]);
-    } catch {
+    } catch (e) {
+      const isLocalError = localReady && (e.message?.includes('fetch') || e.message?.includes('CORS') || e.message?.includes('Failed'));
       setMessages(prev => [...prev, {
-        role: 'assistant', content: 'Failed to connect. Check Settings.',
+        role: 'assistant',
+        content: isLocalError
+          ? `❌ Cannot reach ${keys.localLlmProvider} at ${keys.localLlmUrl}\n\n**Fix:** ${keys.localLlmProvider === 'ollama' ? 'Start Ollama with CORS enabled:\n```\nOLLAMA_ORIGINS=* ollama serve\n```' : 'Enable CORS in your LLM app settings.'}`
+          : 'Failed to connect. Check Settings.',
         timestamp: new Date().toISOString(),
       }]);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>

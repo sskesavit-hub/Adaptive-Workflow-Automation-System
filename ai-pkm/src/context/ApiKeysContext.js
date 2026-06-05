@@ -108,25 +108,37 @@ export function ApiKeysProvider({ children }) {
     });
   };
 
-  // ── Scan for local LLMs ─────────────────────────────────────
+  // ── Scan for local LLMs (BROWSER-SIDE — directly hits localhost) ─
   const scanLocalLlms = async () => {
     setLocalLlmScan(prev => ({ ...prev, isScanning: true, results: [] }));
     const results = [];
 
     for (const provider of LOCAL_LLM_PROVIDERS) {
       try {
-        const res = await fetch('/api/scan-local-llm', {
-          method: 'POST',
+        // Fetch directly from the browser so it hits the user's localhost
+        const url = `${provider.baseUrl}${provider.modelsEndpoint}`;
+        const res = await fetch(url, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider }),
           signal: AbortSignal.timeout(3000),
         });
-        const data = await res.json();
-        if (data.available) {
-          results.push({ ...provider, models: data.models || [], available: true });
-        } else {
+
+        if (!res.ok) {
           results.push({ ...provider, models: [], available: false });
+          continue;
         }
+
+        const data = await res.json();
+
+        // Extract model list
+        let models = [];
+        if (provider.modelsPath && data[provider.modelsPath]) {
+          models = data[provider.modelsPath].map(m => m[provider.modelNameKey] || m.name || m);
+        } else if (Array.isArray(data)) {
+          models = data.map(m => m.name || m.id || m);
+        }
+
+        results.push({ ...provider, models, available: true });
       } catch {
         results.push({ ...provider, models: [], available: false });
       }
