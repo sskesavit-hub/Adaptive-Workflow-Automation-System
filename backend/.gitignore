@@ -1,0 +1,44 @@
+# ===========================
+# Python / FastAPI Backend
+# ===========================
+
+# Environment — NEVER commit
+.env
+*.env
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+__pyenv__/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyc
+.pytest_cache/
+
+# ChromaDB local vector store — too large for git
+chroma_db/
+*.chroma
+
+# Temporary uploads
+uploads/
+tmp/
+temp/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

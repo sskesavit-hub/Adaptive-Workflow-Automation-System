@@ -1,0 +1,11 @@
+Model Information:
+* title:	P.A.U.L
+* source:	https://sketchfab.com/3d-models/paul-29ecc2ef77f24939b0efefd8c3a610d3
+* author:	alaeTR (https://sketchfab.com/alaeTR)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "P.A.U.L" (https://sketchfab.com/3d-models/paul-29ecc2ef77f24939b0efefd8c3a610d3) by alaeTR (https://sketchfab.com/alaeTR) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

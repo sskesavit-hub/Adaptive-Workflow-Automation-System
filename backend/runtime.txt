@@ -1,0 +1,2 @@
+# Required for Railway/Render to know the Python version
+python-3.11.0
