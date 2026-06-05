@@ -207,7 +207,7 @@ export default function Avatar3D({ isSpeaking = false, isThinking = false }) {
       // ── Mouse tracking: rotate modelGroup toward cursor ───
       // Clamp to ±0.38 rad (~22°) — keeps motion in a natural range
       targetRotY = Math.max(-0.38, Math.min(0.38,  mx * 0.45));
-      targetRotX = Math.max(-0.20, Math.min(0.20, -my * 0.25));
+      targetRotX = Math.max(-0.20, Math.min(0.20,  my * 0.25));  // ← flipped: +my not -my
 
       // Smooth lerp — slightly faster (0.055) for responsive feel
       currentRotY += (targetRotY - currentRotY) * 0.055;
