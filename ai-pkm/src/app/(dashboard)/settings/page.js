@@ -239,17 +239,6 @@ export default function SettingsPage() {
           )}
         </ServiceCard>
 
-        {/* Supabase */}
-        <ServiceCard title="Supabase (Database)" icon="🗄️" status={connectionStatus.supabase} onTest={()=>handleTest('supabase')}>
-          <Input label="Supabase URL" keyName="supabaseUrl" placeholder="https://xxxx.supabase.co" icon="🌐" type="text" description="Settings → API in your Supabase dashboard" />
-          <Input label="Supabase Anon Key" keyName="supabaseAnonKey" placeholder="sb_publishable_..." icon="🔑" description="The 'anon' key from Settings → API" />
-        </ServiceCard>
-
-        {/* Backend */}
-        <ServiceCard title="AI Backend (FastAPI)" icon="⚙️" status={connectionStatus.backend} onTest={()=>handleTest('backend')} testLabel="Ping Backend">
-          <Input label="Backend URL" keyName="backendUrl" placeholder="http://localhost:8000" icon="🔗" type="text" description="Local: http://localhost:8000 | Railway: https://your-app.railway.app" />
-        </ServiceCard>
-
         {/* Privacy note */}
         <div className="glass" style={{ padding:'20px 24px', background:'rgba(124,58,237,.05)', borderColor:'var(--accent-border)' }}>
           <div style={{ display:'flex', gap:12 }}>
@@ -263,6 +252,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
     </div>
   );
