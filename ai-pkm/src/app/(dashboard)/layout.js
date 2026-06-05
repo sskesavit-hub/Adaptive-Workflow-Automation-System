@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { ApiKeysProvider, useApiKeys } from '@/context/ApiKeysContext';
+import Icon from '@/components/Icon';
 
 const NAV_ITEMS = [
-  { href: '/knowledge-base', icon: '📚', label: 'Knowledge Base' },
-  { href: '/chat', icon: '💬', label: 'AI Chat' },
-  { href: '/insights', icon: '✨', label: 'Insights' },
-  { href: '/settings', icon: '⚙️', label: 'Settings' },
+  { href: '/knowledge-base', icon: 'book',     label: 'Knowledge Base' },
+  { href: '/chat',           icon: 'chat',      label: 'AI Chat' },
+  { href: '/insights',       icon: 'sparkles',  label: 'Insights' },
+  { href: '/settings',       icon: 'settings',  label: 'Settings' },
 ];
 
 function StatusDot() {
@@ -17,7 +18,6 @@ function StatusDot() {
   const allConnected = Object.values(connectionStatus).every(s => s === 'connected');
   const anyConnected = Object.values(connectionStatus).some(s => s === 'connected');
   const anyError = Object.values(connectionStatus).some(s => s === 'error');
-
   const color = allConnected ? '#10b981' : anyError ? '#ef4444' : anyConnected ? '#f59e0b' : '#6b7280';
   return (
     <div style={{
@@ -52,8 +52,10 @@ function Sidebar({ collapsed, setCollapsed }) {
           width: 36, height: 36, borderRadius: 10, flexShrink: 0,
           background: 'linear-gradient(135deg, var(--accent), var(--cyan))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '18px', boxShadow: '0 0 20px var(--accent-glow)',
-        }}>🧠</div>
+          boxShadow: '0 0 20px var(--accent-glow)',
+        }}>
+          <Icon name="brain" size={20} color="#fff" strokeWidth={1.8} />
+        </div>
         {!collapsed && (
           <span style={{ fontWeight: 700, fontSize: '1.1rem', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>
             NeuralVault
@@ -61,7 +63,7 @@ function Sidebar({ collapsed, setCollapsed }) {
         )}
       </div>
 
-      {/* Nav items */}
+      {/* Nav */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {NAV_ITEMS.map(item => {
           const active = pathname === item.href;
@@ -82,10 +84,14 @@ function Sidebar({ collapsed, setCollapsed }) {
                 onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{item.icon}</span>
+                  <Icon
+                    name={item.icon}
+                    size={20}
+                    color={active ? 'var(--accent-bright)' : 'currentColor'}
+                    strokeWidth={active ? 2 : 1.5}
+                  />
                   {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
                 </div>
-                {/* Alert dot on Settings if any key is not configured */}
                 {isSettings && anyIssue && !collapsed && (
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 8px #f59e0b' }} />
                 )}
@@ -121,7 +127,7 @@ function Sidebar({ collapsed, setCollapsed }) {
           color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.85rem',
           transition: 'all 0.2s',
         }}>
-          <span>{collapsed ? '→' : '←'}</span>
+          <Icon name={collapsed ? 'chevronRight' : 'chevronLeft'} size={16} />
           {!collapsed && <span>Collapse</span>}
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px' }}>
@@ -135,7 +141,6 @@ function Sidebar({ collapsed, setCollapsed }) {
 
 export default function DashboardLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
-
   return (
     <ApiKeysProvider>
       <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative', zIndex: 1 }}>

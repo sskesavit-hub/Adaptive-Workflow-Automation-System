@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useApiKeys } from '@/context/ApiKeysContext';
+import Icon from '@/components/Icon';
 
 const Avatar3D = dynamic(() => import('@/components/Avatar3D'), { ssr: false });
 
@@ -23,8 +24,10 @@ function MessageBubble({ msg }) {
         <div style={{
           width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
           background: 'linear-gradient(135deg, var(--accent), var(--cyan))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px',
-        }}>🧠</div>
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="brain" size={16} color="#fff" strokeWidth={1.8} />
+        </div>
       )}
       <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <div style={{
@@ -44,7 +47,10 @@ function MessageBubble({ msg }) {
               <span key={i} style={{
                 padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 500,
                 background: 'var(--cyan-dim)', border: '1px solid rgba(6,182,212,0.3)', color: 'var(--cyan)',
-              }}>📄 {src}</span>
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}>
+                <Icon name="document" size={11} color="var(--cyan)" /> {src}
+              </span>
             ))}
           </div>
         )}
@@ -59,8 +65,10 @@ function ThinkingBubble() {
       <div style={{
         width: 32, height: 32, borderRadius: '50%',
         background: 'linear-gradient(135deg, var(--accent), var(--cyan))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0,
-      }}>🧠</div>
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <Icon name="brain" size={16} color="#fff" strokeWidth={1.8} />
+      </div>
       <div style={{
         padding: '14px 18px', borderRadius: '16px 16px 16px 4px',
         background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
@@ -226,9 +234,10 @@ export default function ChatPage() {
             <div style={{
               width: '100%', padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
               background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
-              color: 'var(--accent-bright)', fontSize: '0.85rem', fontWeight: 500, textAlign: 'center',
+              color: 'var(--accent-bright)', fontSize: '0.85rem', fontWeight: 500,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              ⚙️ Configure AI in Settings
+              <Icon name="settings" size={14} color="var(--accent-bright)" /> Configure AI in Settings
             </div>
           </Link>
         )}
@@ -250,10 +259,13 @@ export default function ChatPage() {
           </div>
           <Link href="/settings">
             <button style={{
+              display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem',
               background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
               color: 'var(--text-secondary)', cursor: 'pointer',
-            }}>⚙️ Settings</button>
+            }}>
+              <Icon name="settings" size={14} /> Settings
+            </button>
           </Link>
         </div>
 
@@ -288,12 +300,14 @@ export default function ChatPage() {
               disabled={isLoading || !input.trim() || !aiReady}
               className="btn-primary"
               style={{
-                padding: '14px 24px', borderRadius: '14px', fontSize: '0.95rem',
+                padding: '14px 20px', borderRadius: '14px', fontSize: '0.95rem',
                 opacity: isLoading || !input.trim() || !aiReady ? 0.5 : 1,
                 cursor: isLoading || !input.trim() || !aiReady ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
               }}
             >
-              {isLoading ? '...' : '↑ Send'}
+              <Icon name={isLoading ? 'activity' : 'send'} size={16} color="#fff" />
+              {isLoading ? 'Thinking' : 'Send'}
             </button>
           </div>
         </div>
