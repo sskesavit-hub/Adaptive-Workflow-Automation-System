@@ -74,10 +74,201 @@ function LocalLlmSection() {
   const { keys, updateKey, updateKeys, connectionStatus, testConnection, localLlmScan, scanLocalLlms } = useApiKeys();
   const { isScanning, results, lastScanned } = localLlmScan;
   const available = results.filter(r => r.available);
+  const [customUrl, setCustomUrl] = useState(keys.localLlmUrl || '');
+  const [customModel, setCustomModel] = useState(keys.localLlmModel || '');
+  const [customMode, setCustomMode] = useState(false);
 
+  const isHosted = typeof window !== 'undefined' && window.location.protocol === 'https:';
   const selectedProvider = LOCAL_LLM_PROVIDERS.find(p => p.id === keys.localLlmProvider);
   const selectedProviderResult = results.find(r => r.id === keys.localLlmProvider);
   const modelList = selectedProviderResult?.models || [];
+
+  const applyCustomUrl = () => {
+    if (!customUrl || !customModel) return;
+    const isOllama = customUrl.includes('11434') || customModel.includes(':');
+    updateKeys({
+      localLlmEnabled: true,
+      localLlmProvider: isOllama ? 'ollama' : 'lmstudio',
+      localLlmModel: customModel,
+      localLlmUrl: customUrl.replace(/\/$/, ''),
+    });
+  };
+
+  return (
+    <div className="glass" style={{ padding:28, marginBottom:24 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ width:44, height:44, borderRadius:12, background:'var(--accent-dim)', border:'1px solid var(--accent-border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem' }}>🖥️</div>
+          <div>
+            <h3 style={{ fontWeight:600, fontSize:'1.05rem' }}>Local LLM (No API Key)</h3>
+            <p style={{ color:'var(--text-tertiary)', fontSize:'.8rem' }}>Run AI models directly on your device</p>
+          </div>
+        </div>
+        <StatusBadge status={connectionStatus.localLlm} />
+      </div>
+
+      {/* HTTPS warning */}
+      {isHosted && (
+        <div style={{ padding:'14px 16px', borderRadius:10, marginBottom:20, background:'rgba(245,158,11,.07)', border:'1px solid rgba(245,158,11,.3)' }}>
+          <p style={{ fontWeight:600, color:'#f59e0b', marginBottom:8, fontSize:'.9rem' }}>⚠️ Hosted App — Browser Security Blocks Direct localhost Access</p>
+          <p style={{ color:'var(--text-secondary)', fontSize:'.83rem', lineHeight:1.6, marginBottom:10 }}>
+            Because this app is on <strong>https://</strong>, your browser blocks connections to <code style={{ background:'rgba(0,0,0,.3)', padding:'2px 5px', borderRadius:4 }}>http://localhost</code>. You have two options:
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, fontSize:'.83rem' }}>
+            <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(16,185,129,.07)', border:'1px solid rgba(16,185,129,.2)', color:'#10b981' }}>
+              <strong>Option A (Easiest):</strong> Run the app locally instead →{' '}
+              <code style={{ background:'rgba(0,0,0,.3)', padding:'2px 6px', borderRadius:4 }}>npm run dev</code>{' '}
+              then open <strong>http://localhost:3000</strong>
+            </div>
+            <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(124,58,237,.07)', border:'1px solid var(--accent-border)', color:'var(--accent-bright)' }}>
+              <strong>Option B (Stay on Vercel):</strong> Expose Ollama via ngrok →{' '}
+              <code style={{ background:'rgba(0,0,0,.3)', padding:'2px 6px', borderRadius:4 }}>ngrok http 11434</code>{' '}
+              → paste the <strong>https://</strong> URL below ↓
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Free banner (only show on localhost) */}
+      {!isHosted && (
+        <div style={{ padding:'12px 16px', borderRadius:10, marginBottom:20, background:'rgba(16,185,129,.06)', border:'1px solid rgba(16,185,129,.2)', fontSize:'.85rem', color:'#10b981' }}>
+          🆓 <strong>100% Free & Private</strong> — Your data never leaves your device
+        </div>
+      )}
+
+      {/* Scan button — only works on localhost or with custom HTTPS URL */}
+      <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+        {!isHosted && (
+          <button onClick={scanLocalLlms} disabled={isScanning} style={{ padding:'12px 20px', borderRadius:10, fontSize:'.9rem', fontWeight:600, background:'linear-gradient(135deg, var(--accent), var(--cyan))', border:'none', color:'#fff', cursor:isScanning?'not-allowed':'pointer', opacity:isScanning?.6:1, display:'flex', alignItems:'center', gap:8 }}>
+            {isScanning ? '🔍 Scanning device...' : '🔍 Scan for Local AI Models'}
+          </button>
+        )}
+        <button onClick={() => setCustomMode(!customMode)} style={{ padding:'12px 20px', borderRadius:10, fontSize:'.9rem', fontWeight:600, background:'var(--bg-tertiary)', border:'1px solid var(--border)', color:'var(--text-primary)', cursor:'pointer' }}>
+          {customMode ? '✕ Close' : '🔗 Enter Custom URL (ngrok / tunnel)'}
+        </button>
+      </div>
+
+      {lastScanned && !isHosted && (
+        <p style={{ color:'var(--text-tertiary)', fontSize:'.78rem', marginBottom:16 }}>
+          Last scanned: {lastScanned.toLocaleTimeString()}
+        </p>
+      )}
+
+      {/* Custom URL input */}
+      {(customMode || isHosted) && (
+        <div style={{ marginBottom:20, padding:'16px', borderRadius:10, background:'var(--bg-tertiary)', border:'1px solid var(--border)' }}>
+          <p style={{ fontWeight:600, fontSize:'.9rem', marginBottom:14 }}>🔗 Custom LLM URL</p>
+          <div style={{ marginBottom:12 }}>
+            <label style={{ fontSize:'.83rem', color:'var(--text-secondary)', display:'block', marginBottom:6 }}>
+              Base URL <span style={{ color:'var(--text-tertiary)' }}>(e.g. https://abc123.ngrok-free.app or http://localhost:11434)</span>
+            </label>
+            <input
+              value={customUrl}
+              onChange={e => setCustomUrl(e.target.value)}
+              placeholder="https://abc123.ngrok-free.app"
+              style={{ width:'100%', padding:'10px 14px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-primary)', fontSize:'.9rem', outline:'none', boxSizing:'border-box', fontFamily:'monospace' }}
+              onFocus={e=>e.target.style.borderColor='var(--border-focus)'}
+              onBlur={e=>e.target.style.borderColor='var(--border)'}
+            />
+          </div>
+          <div style={{ marginBottom:12 }}>
+            <label style={{ fontSize:'.83rem', color:'var(--text-secondary)', display:'block', marginBottom:6 }}>
+              Model name <span style={{ color:'var(--text-tertiary)' }}>(e.g. llama3, mistral, phi3)</span>
+            </label>
+            <input
+              value={customModel}
+              onChange={e => setCustomModel(e.target.value)}
+              placeholder="llama3"
+              style={{ width:'100%', padding:'10px 14px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-primary)', fontSize:'.9rem', outline:'none', boxSizing:'border-box', fontFamily:'monospace' }}
+              onFocus={e=>e.target.style.borderColor='var(--border-focus)'}
+              onBlur={e=>e.target.style.borderColor='var(--border)'}
+            />
+          </div>
+          <button
+            onClick={applyCustomUrl}
+            disabled={!customUrl || !customModel}
+            style={{ padding:'10px 20px', borderRadius:8, fontSize:'.9rem', fontWeight:600, background:'linear-gradient(135deg, var(--accent), var(--cyan))', border:'none', color:'#fff', cursor:!customUrl||!customModel?'not-allowed':'pointer', opacity:!customUrl||!customModel?.5:1 }}>
+            ✅ Connect to this LLM
+          </button>
+        </div>
+      )}
+
+      {/* Scan results */}
+      {results.length > 0 && !isHosted && (
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontWeight:500, fontSize:'.9rem', marginBottom:12 }}>
+            {available.length > 0 ? `✅ Found ${available.length} provider${available.length>1?'s':''} running:` : '❌ No local LLM providers found running'}
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {results.map(r => (
+              <div key={r.id} style={{
+                padding:'12px 16px', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'space-between',
+                background: r.available ? 'rgba(16,185,129,.06)' : 'var(--bg-tertiary)',
+                border: `1px solid ${r.available ? 'rgba(16,185,129,.25)' : 'var(--border)'}`,
+                cursor: r.available ? 'pointer' : 'default',
+              }} onClick={() => { if (r.available && r.models.length > 0) updateKeys({ localLlmEnabled:true, localLlmProvider:r.id, localLlmModel:r.models[0], localLlmUrl:r.baseUrl }); }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:'1.2rem' }}>{r.icon}</span>
+                  <div>
+                    <div style={{ fontWeight:500, fontSize:'.9rem', color: r.available ? '#10b981' : 'var(--text-secondary)' }}>{r.name}</div>
+                    <div style={{ fontSize:'.75rem', color:'var(--text-tertiary)' }}>{r.baseUrl}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign:'right' }}>
+                  {r.available ? (
+                    <>
+                      <div style={{ color:'#10b981', fontSize:'.8rem', fontWeight:500 }}>● Running</div>
+                      <div style={{ color:'var(--text-tertiary)', fontSize:'.75rem' }}>{r.models.length} model{r.models.length!==1?'s':''}</div>
+                    </>
+                  ) : (
+                    <div style={{ color:'var(--text-tertiary)', fontSize:'.8rem' }}>● Not running</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active config */}
+      {keys.localLlmEnabled && selectedProvider && (
+        <div style={{ marginBottom:16, padding:'16px', borderRadius:10, background:'rgba(16,185,129,.06)', border:'1px solid rgba(16,185,129,.25)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+            <p style={{ fontWeight:500, fontSize:'.9rem', color:'#10b981' }}>
+              ✅ Active: {selectedProvider.icon} {selectedProvider.name} — <code style={{ fontSize:'.85rem' }}>{keys.localLlmModel}</code>
+            </p>
+            <button onClick={()=>updateKey('localLlmEnabled',false)} style={{ padding:'4px 10px', borderRadius:6, fontSize:'.75rem', background:'rgba(239,68,68,.1)', border:'1px solid rgba(239,68,68,.3)', color:'#ef4444', cursor:'pointer' }}>
+              Disconnect
+            </button>
+          </div>
+          <div style={{ fontSize:'.78rem', color:'var(--text-tertiary)' }}>{keys.localLlmUrl}</div>
+          {modelList.length > 1 && (
+            <select value={keys.localLlmModel||''} onChange={e=>updateKey('localLlmModel', e.target.value)} style={{ marginTop:10, width:'100%', padding:'8px 12px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-primary)', fontSize:'.85rem' }}>
+              {modelList.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          )}
+        </div>
+      )}
+
+      {/* Install guide */}
+      {results.length > 0 && available.length === 0 && !isHosted && (
+        <div style={{ padding:'16px', borderRadius:10, background:'rgba(245,158,11,.06)', border:'1px solid rgba(245,158,11,.2)', marginBottom:16 }}>
+          <p style={{ fontWeight:600, color:'#f59e0b', marginBottom:10, fontSize:'.9rem' }}>💡 Install a local LLM:</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, fontSize:'.85rem', color:'var(--text-secondary)' }}>
+            <div>🦙 <strong>Ollama</strong> → <a href="https://ollama.ai" target="_blank" rel="noreferrer" style={{ color:'var(--accent-bright)' }}>ollama.ai</a> → <code style={{ background:'rgba(0,0,0,.3)', padding:'2px 6px', borderRadius:4 }}>ollama run llama3</code></div>
+            <div>🔬 <strong>LM Studio</strong> → <a href="https://lmstudio.ai" target="_blank" rel="noreferrer" style={{ color:'var(--accent-bright)' }}>lmstudio.ai</a> → Start local server</div>
+          </div>
+        </div>
+      )}
+
+      <button onClick={()=>testConnection('localLlm')} disabled={!keys.localLlmProvider || connectionStatus.localLlm==='checking'} style={{ padding:'10px 20px', borderRadius:10, fontSize:'.9rem', fontWeight:500, background:'var(--bg-tertiary)', border:'1px solid var(--border)', color:'var(--text-primary)', cursor:'pointer', opacity:!keys.localLlmProvider?.5:1 }}>
+        ⚡ Test Local LLM
+      </button>
+    </div>
+  );
+}
+
+
 
   return (
     <div className="glass" style={{ padding:28, marginBottom:24 }}>
