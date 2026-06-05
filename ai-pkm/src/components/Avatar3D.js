@@ -96,17 +96,13 @@ export default function Avatar3D({ isSpeaking = false, isThinking = false }) {
 
     // ── Mouse tracking: listen on the *page* for the chat panel ─
     const onMouseMove = (e) => {
-      // map global page coords → normalised -1..1 relative to container
-      const rect = container.getBoundingClientRect();
-      // detect if mouse is over the avatar panel or nearby chat area
-      // we track as long as mouse is within a generous zone (full viewport)
+      // Normalise against full VIEWPORT so values stay in -1..1
+      // regardless of where in the page the cursor is
       mouseRef.current = {
-        x: ((e.clientX - rect.left) / rect.width  - 0.5) * 2,
-        y: ((e.clientY - rect.top)  / rect.height - 0.5) * 2,
+        x: (e.clientX / window.innerWidth  - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
       };
-      trackRef.current = true;
     };
-    // attach to window so we catch mouse even in adjacent chat panel
     window.addEventListener('mousemove', onMouseMove);
 
     // ── Load GLTF Model ──────────────────────────────────────
@@ -209,14 +205,15 @@ export default function Avatar3D({ isSpeaking = false, isThinking = false }) {
       }
 
       // ── Mouse tracking: rotate modelGroup toward cursor ───
-      // map mouse -1..1 → rotation range ±0.35 rad (~20°)
-      targetRotY =  mx * 0.35;
-      targetRotX = -my * 0.2;
+      // Clamp to ±0.38 rad (~22°) — keeps motion in a natural range
+      targetRotY = Math.max(-0.38, Math.min(0.38,  mx * 0.45));
+      targetRotX = Math.max(-0.20, Math.min(0.20, -my * 0.25));
 
-      // Lerp smoothly (lazy follow)
-      currentRotY += (targetRotY - currentRotY) * 0.04;
-      currentRotX += (targetRotX - currentRotX) * 0.04;
+      // Smooth lerp — slightly faster (0.055) for responsive feel
+      currentRotY += (targetRotY - currentRotY) * 0.055;
+      currentRotX += (targetRotX - currentRotX) * 0.055;
 
+      // Apply base tracking rotation
       modelGroup.rotation.y = currentRotY;
       modelGroup.rotation.x = currentRotX;
 
@@ -245,9 +242,10 @@ export default function Avatar3D({ isSpeaking = false, isThinking = false }) {
         }
       }
 
-      // ── Speaking: subtle head waggle ─────────────────────
+      // ── Speaking: subtle head waggle (additive, doesn't drift) ──
       if (isSpeaking || isThinking) {
-        modelGroup.rotation.y += Math.sin(elapsed * 3.5) * 0.02;
+        // Add wobble ON TOP of the tracked rotation — don't accumulate
+        modelGroup.rotation.y = currentRotY + Math.sin(elapsed * 3.5) * 0.018;
       }
 
       // ── Glow rings ───────────────────────────────────────
